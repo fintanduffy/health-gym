@@ -23,10 +23,10 @@ const cpState = {
  * GymPlan class extends State class
  * Class will be used by application and smart contract to define a plan
  */
-class GymPlan extends State {
+class GymPlanSubscription extends State {
 
     constructor(obj) {
-        super(GymPlan.getClass(), [obj.issuer, obj.planNumber]);
+        super(GymPlanSubscription.getClass(), [obj.issuer, obj.planNumber, obj.planSubscriber, obj.subscribeDateTime]);
         Object.assign(this, obj);
     }
 
@@ -109,7 +109,7 @@ class GymPlan extends State {
     }*/
 
     static fromBuffer(buffer) {
-        return GymPlan.deserialize(buffer);
+        return GymPlanSubscription.deserialize(buffer);
     }
 
     toBuffer() {
@@ -121,7 +121,7 @@ class GymPlan extends State {
      * @param {Buffer} data to form back into the object
      */
     static deserialize(data) {
-        return State.deserializeClass(data, GymPlan);
+        return State.deserializeClass(data, GymPlanSubscription);
     }
 
     /**
@@ -130,13 +130,13 @@ class GymPlan extends State {
     /*static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty) {
         return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty });
     }*/
-    static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
-        return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess });
+    static createInstance(issuer, planNumber, planSubscriber, subscribeDateTime) {
+        return new GymPlanSubscription({issuer, planNumber, planSubscriber, subscribeDateTime});
     }
 
     static getClass() {
-        return 'org.gymplannet.gymplan';
+        return 'org.gymplannet.gymplansubscription';
     }
 }
 
-module.exports = GymPlan;
+module.exports = GymPlanSubscription;

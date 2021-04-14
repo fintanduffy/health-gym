@@ -9,7 +9,7 @@
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
  * 3. Access GymPlanNet network
- * 4. Construct request to buy gym plan
+ * 4. Construct request to subscribe to a gym plan
  * 5. Submit transaction
  * 6. Process response
  */
@@ -20,7 +20,7 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 const { Wallets, Gateway } = require('fabric-network');
-const GymPlan = require('../../universalhealth/contract/lib/gymplan.js');
+const GymPlanSubcription = require('../contract/lib/gymplansubscription.js');
 
 
 // Main program function
@@ -65,16 +65,16 @@ async function main () {
         const contract = await network.getContract('gymplancontract', 'org.gymplannet.gymplan');
 
         // buy gym plan
-        console.log('Submit gym plan buy transaction.');
+        console.log('Submit gym plan subscribe transaction.');
 
-        const buyResponse = await contract.submitTransaction('buy', 'UniversalHealth', '00001', 'UniversalHealth', 'GloboGym', '4900000', '2020-05-31');
+        const subscribeResponse = await contract.submitTransaction('subscribe', 'UniversalHealth', '00001', 'GloboGym', '2020-05-31');
 
         // process response
-        console.log('Process buy transaction response.');
+        console.log('Process subscribe transaction response.');
 
-        let plan = GymPlan.fromBuffer(buyResponse);
+        let planSubscription = GymPlanSubcription.fromBuffer(subscribeResponse);
 
-        console.log(`${plan.issuer} gym plan : ${plan.planNumber} successfully purchased by ${plan.owner}`);
+        console.log(`${planSubscription.issuer} gym plan : ${planSubscription.planNumber} successfully subscribed by ${planSubscription.owner}`);
         console.log('Transaction complete.');
 
     } catch (error) {
@@ -92,11 +92,11 @@ async function main () {
 }
 main().then(() => {
 
-    console.log('Buy program complete.');
+    console.log('Subscribe program complete.');
 
 }).catch((e) => {
 
-    console.log('Buy program exception.');
+    console.log('Subscribe program exception.');
     console.log(e);
     console.log(e.stack);
     process.exit(-1);

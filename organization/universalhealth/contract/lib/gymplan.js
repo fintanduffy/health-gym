@@ -12,9 +12,11 @@ const State = require('../ledger-api/state.js');
 // Enumerate gym plan state values
 const cpState = {
     ISSUED: 1,
-    PENDING: 2,
-    TRADING: 3,
-    REDEEMED: 4
+    SUBSCRIBING: 2,
+    EXPIRED: 3
+    // PENDING: 2,
+    // TRADING: 3,
+    // REDEEMED: 4
 };
 
 /**
@@ -62,7 +64,15 @@ class GymPlan extends State {
         this.currentState = cpState.ISSUED;
     }
 
-    setTrading() {
+    setSubscribing(){
+        this.currentState = cpState.SUBSCRIBING
+    }
+
+    setExpired(){
+        this.currentState = cpState.EXPIRED
+    }
+
+    /*setTrading() {
         this.currentState = cpState.TRADING;
     }
 
@@ -72,13 +82,21 @@ class GymPlan extends State {
 
     setPending() {
         this.currentState = cpState.PENDING;
-    }
+    }*/
 
     isIssued() {
         return this.currentState === cpState.ISSUED;
     }
 
-    isTrading() {
+    isSubscribing(){
+        return this.currentState === cpState.SUBSCRIBING;
+    }
+
+    isExpired(){
+        return this.currentState === cpState.EXPIRED;
+    }
+
+    /*isTrading() {
         return this.currentState === cpState.TRADING;
     }
 
@@ -88,7 +106,7 @@ class GymPlan extends State {
 
     isPending() {
         return this.currentState === cpState.PENDING;
-    }
+    }*/
 
     static fromBuffer(buffer) {
         return GymPlan.deserialize(buffer);
@@ -109,8 +127,11 @@ class GymPlan extends State {
     /**
      * Factory method to create a gym plan object
      */
-    static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, faceValue) {
-        return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, faceValue });
+    /*static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty) {
+        return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty });
+    }*/
+    static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
+        return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess });
     }
 
     static getClass() {

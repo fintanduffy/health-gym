@@ -21,6 +21,7 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const { Wallets, Gateway } = require('fabric-network');
 const GymPlan = require('../contract/lib/gymplan.js');
+const GymPlanSubcription = require('../contract/lib/gymplansubscription.js');
 
 // Main program function
 async function main() {
@@ -66,15 +67,29 @@ async function main() {
         // issue gym plan
         console.log('Submit gym plan issue transaction.');
 
-        const issueResponse = await contract.submitTransaction('issueGym', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '5000000');
+        const issueResponse = await contract.submitTransaction('issueGym', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
 
         // process response
         console.log('Process issue transaction response.'+issueResponse);
 
         let plan = GymPlan.fromBuffer(issueResponse);
 
-        console.log(`${plan.issuer} gym plan : ${plan.planNumber} successfully issued for value ${plan.faceValue}`);
+        console.log(`${plan.issuer} gym plan : ${plan.planNumber} successfully issued.`);
         console.log('Transaction complete.');
+
+        // subscribe to gym plan
+        console.log('Submit gym plan subscribe transaction.');
+
+        const issueResponseSub = await contract.submitTransaction('subscribe', 'UniversalHealth', '00001', 'GloboGym', '2020-05-31');
+
+        // process response
+        console.log('Process issue transaction response.'+issueResponseSub);
+
+        let planSubscription = GymPlanSubcription.fromBuffer(issueResponseSub);
+
+        console.log(`${planSubscription.issuer} gym plan : ${planSubscription.planNumber} successfully subscribed by ${planSubscription.planSubscriber}`);
+        console.log('Transaction complete.'); 
+
 
     } catch (error) {
 

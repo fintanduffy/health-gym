@@ -14,20 +14,20 @@ const GymPlan = require('./gymplan.js');
 class GymPlanList extends StateList {
 
     constructor(ctx) {
-        super(ctx, 'org.gymplannet.plan');
+        super(ctx, 'org.gymplannet.gymplan');
         this.use(GymPlan);
     }
 
-    async addPaper(plan) {
-        return this.addState(plan);
+    async addGymPlan(gymplan) {
+        return this.addState(gymplan);
     }
 
-    async getPaper(planKey) {
-        return this.getState(planKey);
+    async getGymPlan(gymPlanKey) {
+        return this.getState(gymPlanKey);
     }
 
-    async updatePaper(plan) {
-        return this.updateState(plan);
+    async updateGymPlan(gymplan) {
+        return this.updateState(gymplan);
     }
 }
 

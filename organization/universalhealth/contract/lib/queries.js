@@ -23,12 +23,27 @@ class QueryUtils {
     // =========================================================================================
     /**
     * Get Asset History for a gym plan
-    * @param {String} issuer the CP issuer
+    * @param {String} issuer the plan issuer
     * @param {String} planNumber gym plan number
     */
     async getAssetHistory(issuer, planNumber) {
 
         let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [issuer, planNumber]);
+        const resultsIterator = await this.ctx.stub.getHistoryForKey(ledgerKey);
+        let results = await this.getAllResults(resultsIterator, true);
+
+        return results;
+    }
+
+    /**
+    * Get Asset History for a gym plan subscription
+    * @param {String} issuer the plan issuer
+    * @param {String} planNumber gym plan number
+    * @param {String} planSubscriber gym plan subscriber
+    */
+     async getAssetHistorySubscription(issuer, planNumber, planSubscriber) {
+
+        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [issuer, planNumber, planSubscriber]);
         const resultsIterator = await this.ctx.stub.getHistoryForKey(ledgerKey);
         let results = await this.getAllResults(resultsIterator, true);
 
