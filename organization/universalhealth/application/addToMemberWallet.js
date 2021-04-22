@@ -1,9 +1,3 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- *  SPDX-License-Identifier: Apache-2.0
- */
-
 'use strict';
 
 // Bring key classes into scope, most importantly Fabric SDK network class

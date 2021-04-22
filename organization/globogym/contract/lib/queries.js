@@ -23,12 +23,12 @@ class QueryUtils {
     // =========================================================================================
     /**
     * Get Asset History for a gym plan
-    * @param {String} issuer the plan issuer
+    * @param {String} owner the plan owner
     * @param {String} planNumber gym plan number
     */
-    async getAssetHistory(issuer, planNumber) {
+    async getAssetHistory(owner, planNumber) {
 
-        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [issuer, planNumber]);
+        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [owner, planNumber]);
         const resultsIterator = await this.ctx.stub.getHistoryForKey(ledgerKey);
         let results = await this.getAllResults(resultsIterator, true);
 
@@ -37,13 +37,29 @@ class QueryUtils {
 
     /**
     * Get Asset History for a gym plan subscription
-    * @param {String} issuer the plan issuer
+    * @param {String} owner the plan owner
     * @param {String} planNumber gym plan number
     * @param {String} planSubscriber gym plan subscriber
     */
-     async getAssetHistorySubscription(issuer, planNumber, planSubscriber) {
+     async getAssetHistorySubscription(owner, planNumber, planSubscriber) {
 
-        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [issuer, planNumber, planSubscriber]);
+        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [owner, planNumber, planSubscriber]);
+        const resultsIterator = await this.ctx.stub.getHistoryForKey(ledgerKey);
+        let results = await this.getAllResults(resultsIterator, true);
+
+        return results;
+    }
+
+    /**
+    * Get Asset History for a gym plan usage
+    * @param {String} owner the plan owner
+    * @param {String} planNumber gym plan number
+    * @param {String} planSubscriber gym plan subscriber
+    * @param {String} planMember gym plan member
+    */
+     async getAssetHistoryUsage(owner, planNumber, planSubscriber, planMember) {
+
+        let ledgerKey = await this.ctx.stub.createCompositeKey(this.name, [owner, planNumber, planSubscriber, planMember]);
         const resultsIterator = await this.ctx.stub.getHistoryForKey(ledgerKey);
         let results = await this.getAllResults(resultsIterator, true);
 

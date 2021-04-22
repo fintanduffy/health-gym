@@ -3,10 +3,10 @@
 // Utility class for ledger state
 const State = require('../ledger-api/state.js');
 
-// Enumerate gym plan state values
+// Enumerate gym plan usage state values
 const gpState = {
-    ISSUED: 1,
-    SUBSCRIBING: 2,
+    DORMANT: 1,
+    ACTIVE: 2,
     EXPIRED: 3
 };
 
@@ -14,16 +14,17 @@ const gpState = {
  * GymPlan class extends State class
  * Class will be used by application and smart contract to define a plan
  */
-class GymPlan extends State {
+class GymPlanUsage extends State {
 
     constructor(obj) {
-        super(GymPlan.getClass(), [obj.owner, obj.planNumber]);
+        super(GymPlanUsage.getClass(), [obj.owner, obj.planNumber, obj.planSubscriber, obj.planMember]);
         Object.assign(this, obj);
     }
 
     /**
      * Basic getters and setters
     */
+
     getOwner() {
         return this.owner;
     }
@@ -43,24 +44,24 @@ class GymPlan extends State {
     /**
      * Useful methods to encapsulate gym plan states
      */
-    setIssued() {
-        this.currentState = gpState.ISSUED;
+    setDormant() {
+        this.currentState = gpState.DORMANT;
     }
 
-    setSubscribing(){
-        this.currentState = gpState.SUBSCRIBING
+    setActive(){
+        this.currentState = gpState.ACTIVE;
     }
 
     setExpired(){
-        this.currentState = gpState.EXPIRED
+        this.currentState = gpState.EXPIRED;
     }
 
-    isIssued() {
-        return this.currentState === gpState.ISSUED;
+    isDormant() {
+        return this.currentState === gpState.DORMANT;
     }
 
-    isSubscribing(){
-        return this.currentState === gpState.SUBSCRIBING;
+    isActive(){
+        return this.currentState === gpState.ACTIVE;
     }
 
     isExpired(){
@@ -68,7 +69,7 @@ class GymPlan extends State {
     }
 
     static fromBuffer(buffer) {
-        return GymPlan.deserialize(buffer);
+        return GymPlanUsage.deserialize(buffer);
     }
 
     toBuffer() {
@@ -80,19 +81,19 @@ class GymPlan extends State {
      * @param {Buffer} data to form back into the object
      */
     static deserialize(data) {
-        return State.deserializeClass(data, GymPlan);
+        return State.deserializeClass(data, GymPlanUsage);
     }
 
     /**
      * Factory method to create a gym plan object
      */
-    static createInstance(owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
-        return new GymPlan({owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess });
+    static createInstance(issuer, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
+        return new GymPlanUsage({issuer, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess});
     }
 
     static getClass() {
-        return 'org.gymplannet.gymplan';
+        return 'org.gymplannet.gymplanusage';
     }
 }
 
-module.exports = GymPlan;
+module.exports = GymPlanUsage;

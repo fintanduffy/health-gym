@@ -1,10 +1,4 @@
 /*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
-/*
  * This application has 6 basic steps:
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
@@ -27,7 +21,7 @@ const GymPlanSubcription = require('../contract/lib/gymplansubscription.js');
 async function main() {
 
     // A wallet stores a collection of identities for use
-    const wallet = await Wallets.newFileSystemWallet('../identity/user/isabella/wallet');
+    const wallet = await Wallets.newFileSystemWallet('../identity/user/kate/wallet');
 
     // A gateway defines the peers used to access Fabric networks
     const gateway = new Gateway();
@@ -36,8 +30,7 @@ async function main() {
     try {
 
         // Specify userName for network access
-        // const userName = 'isabella.issuer@universalhealth.com';
-        const userName = 'isabella';
+        const userName = 'kate';
 
         // Load connection profile; will be used to locate a gateway
         let connectionProfile = yaml.safeLoad(fs.readFileSync('../gateway/connection-org2.yaml', 'utf8'));
@@ -67,29 +60,15 @@ async function main() {
         // issue gym plan
         console.log('Submit gym plan issue transaction.');
 
-        const issueResponse = await contract.submitTransaction('issueGym', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
+        const issueResponse = await contract.submitTransaction('issue', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
 
         // process response
         console.log('Process issue transaction response.'+issueResponse);
 
         let plan = GymPlan.fromBuffer(issueResponse);
 
-        console.log(`${plan.issuer} gym plan : ${plan.planNumber} successfully issued.`);
+        console.log(`${plan.owner} gym plan : ${plan.planNumber} successfully issued.`);
         console.log('Transaction complete.');
-
-        // subscribe to gym plan
-        console.log('Submit gym plan subscribe transaction.');
-
-        const issueResponseSub = await contract.submitTransaction('subscribe', 'UniversalHealth', '00001', 'GloboGym', '2020-05-31');
-
-        // process response
-        console.log('Process issue transaction response.'+issueResponseSub);
-
-        let planSubscription = GymPlanSubcription.fromBuffer(issueResponseSub);
-
-        console.log(`${planSubscription.issuer} gym plan : ${planSubscription.planNumber} successfully subscribed by ${planSubscription.planSubscriber}`);
-        console.log('Transaction complete.'); 
-
 
     } catch (error) {
 

@@ -1,9 +1,3 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
 'use strict';
 
 // Fabric smart contract classes
@@ -14,6 +8,8 @@ const GymPlan = require('./gymplan.js');
 const GymPlanList = require('./gymplanlist.js');
 const GymPlanSubscription = require('./gymplansubscription.js');
 const GymPlanSubscriptionList = require('./gymplansubscriptionlist.js');
+const GymPlanUsage = require('./gymplanusage.js');
+const GymPlanUsageList = require('./gymplanusagelist.js');
 const QueryUtils = require('./queries.js');
 
 /**
@@ -24,8 +20,9 @@ class GymPlanContext extends Context {
     constructor() {
         super();
         // All plans are held in a list of plans
-        this.planList = new GymPlanList(this);
+        this.planList = new GymPlanList(this);        
         this.planSubscriptionList = new GymPlanSubscriptionList(this);
+        this.planUsageList = new GymPlanUsageList(this);
     }
 }
 
@@ -61,8 +58,8 @@ class GymPlanContract extends Contract {
      * Issue gym plan
      *
      * @param {Context} ctx the transaction context
-     * @param {String} issuer gym plan issuer
-     * @param {Integer} planNumber plan number for this issuer
+     * @param {String} owner gym plan creator
+     * @param {Integer} planNumber plan number for this owner
      * @param {String} issueDateTime plan issue date
      * @param {String} maturityDateTime plan maturity date
      * @param {Integer} trainerSessions number of personal training sessions
@@ -71,10 +68,10 @@ class GymPlanContract extends Contract {
      * @param {Integer} poolAccess is pool access included
      * param {Integer} faceValue face value of plan
     */
-    async issueGym(ctx, issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
+    async issue(ctx, owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
 
         // create an instance of the plan
-        let plan = GymPlan.createInstance(issuer, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess);
+        let plan = GymPlan.createInstance(owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess);
 
         // Smart contract, rather than plan, moves plan into ISSUED state
         plan.setIssued();
@@ -83,8 +80,7 @@ class GymPlanContract extends Contract {
         let mspid = ctx.clientIdentity.getMSPID();
         plan.setOwnerMSP(mspid);
 
-        // Newly issued plan is owned by the issuer to begin with (recorded for reporting purposes)
-        plan.setOwner(issuer);
+        plan.setOwner(owner);
 
         // Add the plan to the list of all similar gym plans in the ledger world state
         await ctx.planList.addGymPlan(plan);
@@ -97,57 +93,56 @@ class GymPlanContract extends Contract {
      * Subscribe gym plan
      *
       * @param {Context} ctx the transaction context
-      * @param {String} issuer gym plan issuer
-      * @param {Integer} planNumber plan number for this issuer
-      * @param {String} planSubscriber new subscriber to the plan
-      * @param {String} subscribeDateTime time plan was purchased (i.e. traded)  // transaction input - not written to asset
+      * @param {String} owner gym plan subscriber
+      * @param {Integer} planNumber plan number for this owner
+      * @param {String} planOwner owner of the plan
+      * @param {String} subscribeDateTime time plan was subcribed 
      */
-     async subscribe(ctx, issuer, planNumber, planSubscriber, subscribeDateTime) {
+     async subscribe(ctx, owner, planNumber, planOwner, subscribeDateTime) {
 
-        // Retrieve the current plan using key fields provided
-        let planKey = GymPlan.makeKey([issuer, planNumber]);
-        let plan = await ctx.planList.getGymPlan(planKey);
+        let planSubscription = GymPlanSubscription.createInstance(owner, planNumber, planOwner, subscribeDateTime);
+        planSubscription.setSubscribed();
 
-        // Check if already subscribed
-        // To Do. Will need to be a list lookup
-        /*if (plan.getOwner() !== currentOwner) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner);
-        }*/
+        // save the owner's MSP 
+        let mspid = ctx.clientIdentity.getMSPID();
+        planSubscription.setOwnerMSP(mspid);
 
-        // First buy moves state from ISSUED to TRADING (when running )
-        if (plan.isIssued()) {
-            plan.setSubscribing();
-        }
+        planSubscription.setOwner(owner);
 
-        // Check plan is not already EXPIRED
-        if (plan.isSubscribing()) {
+        // Add the plan to the list of all similar gym plans in the ledger world state
+        await ctx.planSubscriptionList.addGymPlanSubscription(planSubscription);
 
-            let planSubscription = GymPlanSubscription.createInstance(issuer, planNumber, planSubscriber, subscribeDateTime);
-            /*plan.setOwner(newOwner);
-            // save the owner's MSP 
-            let mspid = ctx.clientIdentity.getMSPID();
-            plan.setOwnerMSP(mspid);*/
+        return planSubscription;
+    }
 
-            planSubscription.setIssued();
+    /**
+     * Use gym plan
+     *
+      * @param {Context} ctx the transaction context
+      * @param {String} owner gym plan owner
+      * @param {Integer} planNumber plan number for this owner
+      * @param {String} planSubscriber plan subscriber
+      * @param {String} planMember plan member
+      * @param {Integer} trainerSessions number of personal training sessions
+      * @param {Integer} numClasses number of classes
+      * @param {Integer} gymAccess is gym access included
+      * @param {Integer} poolAccess is pool access included
+     */
+     async use_plan(ctx, owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
 
-            // save the owner's MSP 
-            let mspid = ctx.clientIdentity.getMSPID();
-            planSubscription.setOwnerMSP(mspid);
+        let planUsage = GymPlanUsage.createInstance(owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess);
+        planUsage.setActive();
 
-            // Newly issued plan is owned by the issuer to begin with (recorded for reporting purposes)
-            planSubscription.setOwner(issuer);
+        // save the owner's MSP 
+        let mspid = ctx.clientIdentity.getMSPID();
+        planUsage.setOwnerMSP(mspid);
 
-            // Add the plan to the list of all similar gym plans in the ledger world state
-            await ctx.planSubscriptionList.addGymPlanSubscription(planSubscription);
+        planUsage.setOwner(owner);
 
-            return planSubscription;
-        } else {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not trading. Current state = ' + plan.getCurrentState());
-        }
+        // Add the plan usage to the list of all similar gym plans usages in the ledger world state
+        await ctx.planUsageList.addGymPlanUsage(planUsage);
 
-        // Update the plan
-        //await ctx.planList.updateGymPlan(plan);
-        //return plan;
+        return planUsage;
     }
 
     /**
@@ -311,16 +306,16 @@ class GymPlanContract extends Contract {
     /**
      * Query history of a gym plan
      * @param {Context} ctx the transaction context
-     * @param {String} issuer gym plan issuer
-     * @param {Integer} planNumber plan number for this issuer
+     * @param {String} owner gym plan owner
+     * @param {Integer} planNumber plan number for this owner
      * @param {String} listName e.g. org.gymplannet.gymplan
     */
-    async queryHistory(ctx, issuer, planNumber, listName) {
+    async queryHistory(ctx, owner, planNumber, listName) {
 
         // Get a key to be used for History query
 
         let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
-        let results = await query.getAssetHistory(issuer, planNumber); // (cpKey);
+        let results = await query.getAssetHistory(owner, planNumber); // (cpKey);
         return results;
 
     }
@@ -328,19 +323,37 @@ class GymPlanContract extends Contract {
     /**
      * Query history of a gym plan subscription
      * @param {Context} ctx the transaction context
-     * @param {String} issuer gym plan issuer
-     * @param {Integer} planNumber plan number for this issuer
+     * @param {String} owner gym plan owner
+     * @param {Integer} planNumber plan number for this owner
      * @param {String} planSubscriber plan subscriber
      * @param {String} listName e.g. org.gymplannet.gymplan
     */
-     async queryHistorySubscription(ctx, issuer, planNumber, planSubscriber, listName) {
+     async queryHistorySubscription(ctx, owner, planNumber, planSubscriber, listName) {
 
         // Get a key to be used for History query
 
         let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
-        let results = await query.getAssetHistorySubscription(issuer, planNumber, planSubscriber); // (cpKey);
+        let results = await query.getAssetHistorySubscription(owner, planNumber, planSubscriber);
         return results;
 
+    }
+
+    /**
+     * Query history of a gym plan usage
+     * @param {Context} ctx the transaction context
+     * @param {String} owner gym plan owner
+     * @param {Integer} planNumber plan number for this owner
+     * @param {String} planSubscriber plan subscriber
+     * @param {String} planMember plan member
+     * @param {String} listName e.g. org.gymplannet.gymplan
+    */
+     async queryHistoryUsage(ctx, owner, planNumber, planSubscriber, planMember, listName) {
+
+        // Get a key to be used for History query
+
+        let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
+        let results = await query.getAssetHistoryUsage(owner, planNumber, planSubscriber, planMember);
+        return results;
     }
 
     /**
@@ -400,6 +413,15 @@ class GymPlanContract extends Contract {
     async queryNamed(ctx, queryname, listName) {
         let querySelector = {};
         switch (queryname) {
+            case "dormant":
+                querySelector = { "selector": { "currentState": 1 } };  // 1 = dormant state
+                break;
+            case "subscribing":
+                querySelector = { "selector": { "currentState": 2 } };  // 2 = active state
+                break;    
+            case "active":
+                querySelector = { "selector": { "currentState": 2 } };  // 2 = active state
+                break;
             case "redeemed":
                 querySelector = { "selector": { "currentState": 4 } };  // 4 = redeemd state
                 break;

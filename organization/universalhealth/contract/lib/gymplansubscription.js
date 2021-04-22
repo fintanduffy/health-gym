@@ -1,22 +1,12 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
 'use strict';
 
 // Utility class for ledger state
 const State = require('../ledger-api/state.js');
 
 // Enumerate gym plan state values
-const cpState = {
-    ISSUED: 1,
-    SUBSCRIBING: 2,
-    EXPIRED: 3
-    // PENDING: 2,
-    // TRADING: 3,
-    // REDEEMED: 4
+const gpState = {
+    SUBSCRIBED: 1,
+    UNSUBSCRIBED: 2
 };
 
 /**
@@ -26,21 +16,13 @@ const cpState = {
 class GymPlanSubscription extends State {
 
     constructor(obj) {
-        super(GymPlanSubscription.getClass(), [obj.issuer, obj.planNumber, obj.planSubscriber, obj.subscribeDateTime]);
+        super(GymPlanSubscription.getClass(), [obj.owner, obj.planNumber, obj.planOwner]);
         Object.assign(this, obj);
     }
 
     /**
      * Basic getters and setters
     */
-    getIssuer() {
-        return this.issuer;
-    }
-
-    setIssuer(newIssuer) {
-        this.issuer = newIssuer;
-    }
-
     getOwner() {
         return this.owner;
     }
@@ -58,55 +40,23 @@ class GymPlanSubscription extends State {
     }
 
     /**
-     * Useful methods to encapsulate gym plan states
+     * Useful methods to encapsulate gym plan subscription states
      */
-    setIssued() {
-        this.currentState = cpState.ISSUED;
+    setSubscribed() {
+        this.currentState = gpState.SUBSCRIBED;
     }
 
-    setSubscribing(){
-        this.currentState = cpState.SUBSCRIBING
+    setUnSubscribed(){
+        this.currentState = gpState.UNSUBSCRIBED;
     }
 
-    setExpired(){
-        this.currentState = cpState.EXPIRED
+    isSubscribed() {
+        return this.currentState === gpState.SUBSCRIBED;
     }
 
-    /*setTrading() {
-        this.currentState = cpState.TRADING;
+    isUnSubscribed(){
+        return this.currentState === gpState.UNSUBSCRIBED;
     }
-
-    setRedeemed() {
-        this.currentState = cpState.REDEEMED;
-    }
-
-    setPending() {
-        this.currentState = cpState.PENDING;
-    }*/
-
-    isIssued() {
-        return this.currentState === cpState.ISSUED;
-    }
-
-    isSubscribing(){
-        return this.currentState === cpState.SUBSCRIBING;
-    }
-
-    isExpired(){
-        return this.currentState === cpState.EXPIRED;
-    }
-
-    /*isTrading() {
-        return this.currentState === cpState.TRADING;
-    }
-
-    isRedeemed() {
-        return this.currentState === cpState.REDEEMED;
-    }
-
-    isPending() {
-        return this.currentState === cpState.PENDING;
-    }*/
 
     static fromBuffer(buffer) {
         return GymPlanSubscription.deserialize(buffer);
@@ -127,11 +77,8 @@ class GymPlanSubscription extends State {
     /**
      * Factory method to create a gym plan object
      */
-    /*static createInstance(issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty) {
-        return new GymPlan({ issuer, planNumber, issueDateTime, maturityDateTime, faceValue, planQty });
-    }*/
-    static createInstance(issuer, planNumber, planSubscriber, subscribeDateTime) {
-        return new GymPlanSubscription({issuer, planNumber, planSubscriber, subscribeDateTime});
+    static createInstance(owner, planNumber, planOwner, subscribeDateTime) {
+        return new GymPlanSubscription({owner, planNumber, planOwner, subscribeDateTime});
     }
 
     static getClass() {

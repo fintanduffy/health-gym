@@ -1,9 +1,3 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use strict';
 
 const FabricCAServices = require('fabric-ca-client');
@@ -12,7 +6,7 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
 
-async function main() {
+async function enroll() {
     try {
         // load the network configuration
         let connectionProfile = yaml.safeLoad(fs.readFileSync('../gateway/connection-org2.yaml', 'utf8'));
@@ -23,12 +17,12 @@ async function main() {
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
-        const walletPath = path.join(process.cwd(), '../identity/user/isabella/wallet');
+        const walletPath = path.join(process.cwd(), '../identity/user/kate/wallet');
         const wallet = await Wallets.newFileSystemWallet(walletPath);
         console.log(`Wallet path: ${walletPath}`);
 
         // Check to see if we've already enrolled the admin user.
-        const userExists = await wallet.get('isabella');
+        const userExists = await wallet.get('kate');
         if (userExists) {
             console.log('An identity for the client user "user1" already exists in the wallet');
             return;
@@ -44,13 +38,13 @@ async function main() {
             mspId: 'Org2MSP',
             type: 'X.509',
         };
-        await wallet.put('isabella', x509Identity);
-        console.log('Successfully enrolled client user "isabella" and imported it into the wallet');
+        await wallet.put('kate', x509Identity);
+        console.log('Successfully enrolled client user "kate" and imported it into the wallet');
 
     } catch (error) {
-        console.error(`Failed to enroll client user "isabella": ${error}`);
+        console.error(`Failed to enroll client user "kate": ${error}`);
         process.exit(1);
     }
 }
 
-main();
+enroll();

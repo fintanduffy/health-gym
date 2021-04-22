@@ -1,10 +1,4 @@
 /*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
-/*
  * This application has 6 basic steps:
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
@@ -27,7 +21,7 @@ const GymPlanSubcription = require('../contract/lib/gymplansubscription.js');
 async function main () {
 
     // A wallet stores a collection of identities for use
-    const wallet = await Wallets.newFileSystemWallet('../identity/user/balaji/wallet');
+    const wallet = await Wallets.newFileSystemWallet('../identity/user/meshell/wallet');
 
     // A gateway defines the peers used to access Fabric networks
     const gateway = new Gateway();
@@ -36,7 +30,7 @@ async function main () {
     try {
 
         // Specify userName for network access
-        const userName = 'balaji';
+        const userName = 'meshell';
 
         // Load connection profile; will be used to locate a gateway
         let connectionProfile = yaml.safeLoad(fs.readFileSync('../gateway/connection-org1.yaml', 'utf8'));
@@ -46,7 +40,6 @@ async function main () {
             identity: userName,
             wallet: wallet,
             discovery: { enabled: true, asLocalhost: true }
-
         };
 
         // Connect to gateway using application specified parameters
@@ -67,14 +60,14 @@ async function main () {
         // buy gym plan
         console.log('Submit gym plan subscribe transaction.');
 
-        const subscribeResponse = await contract.submitTransaction('subscribe', 'UniversalHealth', '00001', 'GloboGym', '2020-05-31');
+        const subscribeResponse = await contract.submitTransaction('subscribe', 'GloboGym', '00001', 'UniversalHealth', '2020-05-31');
 
         // process response
         console.log('Process subscribe transaction response.');
 
         let planSubscription = GymPlanSubcription.fromBuffer(subscribeResponse);
 
-        console.log(`${planSubscription.issuer} gym plan : ${planSubscription.planNumber} successfully subscribed by ${planSubscription.owner}`);
+        console.log(`${planSubscription.planOwner} gym plan : ${planSubscription.planNumber} successfully subscribed by ${planSubscription.owner}`);
         console.log('Transaction complete.');
 
     } catch (error) {

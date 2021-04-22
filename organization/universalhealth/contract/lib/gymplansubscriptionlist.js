@@ -1,9 +1,3 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
 'use strict';
 
 // Utility class for collections of ledger states --  a state list
@@ -30,6 +24,5 @@ class GymPlanSubscriptionList extends StateList {
         return this.updateState(gymplansubscription);
     }
 }
-
 
 module.exports = GymPlanSubscriptionList;

@@ -131,7 +131,7 @@ async function main() {
         // 6 gym subscription asset history
         console.log('6. Query Gym Plan Subscription History....');
         console.log('-----------------------------------------------------------------------------------------\n');
-        let queryResponse6 = await contract.evaluateTransaction('queryHistory', 'UniversalHealth', '00001', 'org.gymplannet.gymplansubscription');
+        let queryResponse6 = await contract.evaluateTransaction('queryHistorySubscription', 'UniversalHealth', '00001', 'GloboGym', 'org.gymplannet.gymplansubscription');
 
         json = JSON.parse(queryResponse6.toString());
         console.log(json);
@@ -188,7 +188,65 @@ async function main() {
         console.log('\n  Named query by "value" complete.');
         console.log('-----------------------------------------------------------------------------------------\n\n'); 
 
+        // 11 gym usage asset history
+        console.log('11. Query Gym Plan Usage History....');
+        console.log('-----------------------------------------------------------------------------------------\n');
+        let queryResponse11 = await contract.evaluateTransaction('queryHistoryUsage', 'UniversalHealth', '00001', 'GloboHealth', 'Gordon', 'org.gymplannet.gymplanusage');
 
+        json = JSON.parse(queryResponse11.toString());
+        console.log(json);
+        console.log('\n\n');
+        console.log('\n  History query complete.');
+        console.log('-----------------------------------------------------------------------------------------\n\n');
+
+        // 12 ownership query
+        console.log('12. Query Gym Plan Usage Ownership.... GymPlanUsage owned by UniversalHealth');
+        console.log('-----------------------------------------------------------------------------------------\n');
+        let queryResponse12 = await contract.evaluateTransaction('queryOwner', 'UniversalHealth', 'org.gymplannet.gymplanusage');
+        json = JSON.parse(queryResponse12.toString());
+        console.log(json);
+
+        console.log('\n\n');
+        console.log('\n  Plan Ownership query complete.');
+        console.log('-----------------------------------------------------------------------------------------\n\n');
+
+        // 13 partial key query
+        console.log('13. Query Gym Plan Usage Partial Key.... Plans in org.gymplannet.gymplanusage namespace and prefixed UniversalHealth');
+        console.log('-----------------------------------------------------------------------------------------\n');
+        let queryResponse13 = await contract.evaluateTransaction('queryPartial', 'UniversalHealth', 'org.gymplannet.gymplanusage');
+
+        json = JSON.parse(queryResponse13.toString());
+        console.log(json);
+        console.log('\n\n');
+
+        console.log('\n  Partial Key query complete.');
+        console.log('-----------------------------------------------------------------------------------------\n\n');
+
+
+        // 14 Named query - all redeemed plans
+        console.log('14. Named Query: ... All plans in org.gymplannet.gymplanusage that are in current state of active');
+        console.log('-----------------------------------------------------------------------------------------\n');
+        let queryResponse14 = await contract.evaluateTransaction('queryNamed', 'active', 'org.gymplannet.gymplanusage');
+
+        json = JSON.parse(queryResponse14.toString());
+        console.log(json);
+        console.log('\n\n');
+
+        console.log('\n  Named query "active" complete.');
+        console.log('-----------------------------------------------------------------------------------------\n\n');
+
+
+        // 15 named query - by value
+        console.log('15. Named Query:.... All plans in org.gymplannet.gymplanusage ');
+        console.log('-----------------------------------------------------------------------------------------\n');
+        let queryResponse15 = await contract.evaluateTransaction('queryNamed', 'value', 'org.gymplannet.gymplanusage');
+
+        json = JSON.parse(queryResponse15.toString());
+        console.log(json);
+        console.log('\n\n');
+
+        console.log('\n  Named query by "value" complete.');
+        console.log('-----------------------------------------------------------------------------------------\n\n'); 
 
     } catch (error) {
 

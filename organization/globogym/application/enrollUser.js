@@ -1,9 +1,3 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use strict';
 
 const FabricCAServices = require('fabric-ca-client');
@@ -23,14 +17,14 @@ async function main() {
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
         // Create a new file system based wallet for managing identities.
-        const walletPath = path.join(process.cwd(), '../identity/user/balaji/wallet');
+        const walletPath = path.join(process.cwd(), '../identity/user/meshell/wallet');
         const wallet = await Wallets.newFileSystemWallet(walletPath);
         console.log(`Wallet path: ${walletPath}`);
 
         // Check to see if we've already enrolled the admin user.
-        const userExists = await wallet.get('balaji');
+        const userExists = await wallet.get('meshell');
         if (userExists) {
-            console.log('An identity for the client user "balaji" already exists in the wallet');
+            console.log('An identity for the client user "meshell" already exists in the wallet');
             return;
         }
 
@@ -44,11 +38,11 @@ async function main() {
             mspId: 'Org1MSP',
             type: 'X.509',
         };
-        await wallet.put('balaji', x509Identity);
-        console.log('Successfully enrolled client user "balaji" and imported it into the wallet');
+        await wallet.put('meshell', x509Identity);
+        console.log('Successfully enrolled client user "meshell" and imported it into the wallet');
 
     } catch (error) {
-        console.error(`Failed to enroll client user "balaji": ${error}`);
+        console.error(`Failed to enroll client user "meshell": ${error}`);
         process.exit(1);
     }
 }

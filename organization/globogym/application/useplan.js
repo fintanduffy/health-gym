@@ -1,15 +1,9 @@
 /*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
-*/
-
-/*
  * This application has 6 basic steps:
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
- * 3. Access PlanNet network
- * 4. Construct request to issue gym plan
+ * 3. Access GymPlanNet network
+ * 4. Construct request to use a plan subscription
  * 5. Submit transaction
  * 6. Process response
  */
@@ -20,13 +14,14 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 const { Wallets, Gateway } = require('fabric-network');
-const GymPlan = require('../contract/lib/gymplan.js');
+const GymPlanUsage = require('../contract/lib/gymplanusage.js');
+
 
 // Main program function
-async function main() {
+async function main () {
 
     // A wallet stores a collection of identities for use
-    const wallet = await Wallets.newFileSystemWallet('../identity/user/isabella/wallet');
+    const wallet = await Wallets.newFileSystemWallet('../identity/user/meshell/wallet');
 
     // A gateway defines the peers used to access Fabric networks
     const gateway = new Gateway();
@@ -35,17 +30,16 @@ async function main() {
     try {
 
         // Specify userName for network access
-        // const userName = 'isabella.issuer@universalhealth.com';
-        const userName = 'isabella';
+        const userName = 'meshell';
 
         // Load connection profile; will be used to locate a gateway
-        let connectionProfile = yaml.safeLoad(fs.readFileSync('../gateway/connection-org2.yaml', 'utf8'));
+        let connectionProfile = yaml.safeLoad(fs.readFileSync('../gateway/connection-org1.yaml', 'utf8'));
 
         // Set connection options; identity and wallet
         let connectionOptions = {
             identity: userName,
             wallet: wallet,
-            discovery: { enabled:true, asLocalhost: true }
+            discovery: { enabled: true, asLocalhost: true }
         };
 
         // Connect to gateway using application specified parameters
@@ -61,19 +55,18 @@ async function main() {
         // Get addressability to gym plan contract
         console.log('Use org.gymplannet.gymplan smart contract.');
 
-        const contract = await network.getContract('gymplancontract');
+        const contract = await network.getContract('gymplancontract', 'org.gymplannet.gymplan');
 
-        // issue gym plan
-        console.log('Submit gym plan issue transaction.');
+        // use gym plan
+        console.log('Submit gym plan subscribe transaction.');
 
-        const issueResponse = await contract.submitTransaction('issueGym', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
-
+        const usageResponse = await contract.submitTransaction('use_plan', 'UniversalHealth', '00001', 'GloboGym', 'Gordon', '2', '1', '1', '1');
         // process response
-        console.log('Process issue transaction response.'+issueResponse);
+        console.log('Process use plan transaction response.');
 
-        let plan = GymPlan.fromBuffer(issueResponse);
+        let planUsage = GymPlanUsage.fromBuffer(usageResponse);
 
-        console.log(`${plan.issuer} gym plan : ${plan.planNumber} successfully issued for value ${plan.faceValue}`);
+        console.log(`${planUsage.issuer} gym plan : ${planUsage.planNumber} successfully used by ${planUsage.planMember}`);
         console.log('Transaction complete.');
 
     } catch (error) {
@@ -91,11 +84,11 @@ async function main() {
 }
 main().then(() => {
 
-    console.log('Issue program complete.');
+    console.log('Subscribe program complete.');
 
 }).catch((e) => {
 
-    console.log('Issue program exception.');
+    console.log('Subscribe program exception.');
     console.log(e);
     console.log(e.stack);
     process.exit(-1);
