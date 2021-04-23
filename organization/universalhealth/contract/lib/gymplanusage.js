@@ -5,9 +5,8 @@ const State = require('../ledger-api/state.js');
 
 // Enumerate gym plan usage state values
 const gpState = {
-    DORMANT: 1,
-    ACTIVE: 2,
-    EXPIRED: 3
+    CONFIRMED: 1,
+    CANCELLED: 2
 };
 
 /**
@@ -44,28 +43,20 @@ class GymPlanUsage extends State {
     /**
      * Useful methods to encapsulate gym plan states
      */
-    setDormant() {
-        this.currentState = gpState.DORMANT;
+    setConfirmed() {
+        this.currentState = gpState.CONFIRMED;
     }
 
-    setActive(){
-        this.currentState = gpState.ACTIVE;
+    setCancelled(){
+        this.currentState = gpState.CANCELLED;
     }
 
-    setExpired(){
-        this.currentState = gpState.EXPIRED;
+    isConfirmed() {
+        return this.currentState === gpState.CONFIRMED;
     }
 
-    isDormant() {
-        return this.currentState === gpState.DORMANT;
-    }
-
-    isActive(){
-        return this.currentState === gpState.ACTIVE;
-    }
-
-    isExpired(){
-        return this.currentState === gpState.EXPIRED;
+    isCancelled(){
+        return this.currentState === gpState.CANCELLED;
     }
 
     static fromBuffer(buffer) {

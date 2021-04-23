@@ -61,17 +61,26 @@ class GymPlanContract extends Contract {
      * @param {String} owner gym plan creator
      * @param {Integer} planNumber plan number for this owner
      * @param {String} issueDateTime plan issue date
-     * @param {String} maturityDateTime plan maturity date
+     * @param {String} activeDateTime, plan activation date
+     * @param {String} expiryDateTime, plan expiry date
+     * @param {Integer} subsciberCount, number of subscribers
      * @param {Integer} trainerSessions number of personal training sessions
      * @param {Integer} numClasses number of classes
      * @param {Integer} gymAccess is gym access included
      * @param {Integer} poolAccess is pool access included
-     * param {Integer} faceValue face value of plan
     */
-    async issue(ctx, owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
+    async issue(ctx, owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, trainerSessions, numClasses, gymAccess, poolAccess) {
+
+        //  Check if the plan already exists
+        let planKey = GymPlan.makeKey([owner, planNumber]);
+        let plan = await ctx.planList.getGymPlan(planKey);
+
+        if ( plan !== null ){
+            throw new Error('\nPlan ' + owner + planNumber + ' already exists ');    
+        }
 
         // create an instance of the plan
-        let plan = GymPlan.createInstance(owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess);
+        plan = GymPlan.createInstance(owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, trainerSessions, numClasses, gymAccess, poolAccess);
 
         // Smart contract, rather than plan, moves plan into ISSUED state
         plan.setIssued();
@@ -89,6 +98,71 @@ class GymPlanContract extends Contract {
         return plan;
     }
 
+    async expire_plan(ctx, owner, planNumber) {
+
+        // Retrieve the current plan using key fields provided
+        let planKey = GymPlan.makeKey([owner, planNumber]);
+        let plan = await ctx.planList.getGymPlan(planKey);
+
+        // Validate current owner
+        if (plan.getOwner() !== currentOwner) {
+            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner);
+        }
+
+        if (plan.isActive()) {
+            var current = new Date();
+            if (current <= plan.expiryDateTime){
+                plan.setExpired();
+            }
+            else{
+                throw new Error('\nPlan ' + issuer + planNumber + ' is active and has not passed the expiratin date' );
+            }
+        }        
+        else{
+            plan.setExpired();
+        }
+
+        // Update the plan
+        await ctx.planList.updateGymPlan(plan);
+        return plan;
+    }
+
+    async activate_plan(ctx, owner, planNumber) {
+
+        // Retrieve the current plan using key fields provided
+        let planKey = GymPlan.makeKey([owner, planNumber]);
+        let plan = await ctx.planList.getGymPlan(planKey);
+
+        // Validate current owner
+        if (plan.getOwner() !== currentOwner) {
+            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner);
+        }
+
+        if (plan.isActive()) {
+            throw new Error('\nPlan ' + issuer + planNumber + ' is already active' );
+        }
+
+        if (plan.isIssued()) {
+            throw new Error('\nPlan ' + issuer + planNumber + ' has no subscribers. Unable to activate.' );
+        }
+
+        if (plan.isSubscribing()) {
+            if (plan.subscriberCount > 0){
+                var current = new Date();
+                if (current >= plan.activeDateTime){
+                    plan.setActive();
+                }
+            }
+            else{
+                throw new Error('\nPlan ' + issuer + planNumber + ' has no subscribers. Unable to activate.' );
+            }            
+        }
+
+        // Update the plan
+        await ctx.planList.updateGymPlan(plan);
+        return plan;
+    }
+
     /**
      * Subscribe gym plan
      *
@@ -100,26 +174,85 @@ class GymPlanContract extends Contract {
      */
      async subscribe(ctx, owner, planNumber, planOwner, subscribeDateTime) {
 
-        let planSubscription = GymPlanSubscription.createInstance(owner, planNumber, planOwner, subscribeDateTime);
-        planSubscription.setSubscribed();
+        let planSubKey = GymPlanSubscription.makeKey([owner, planNumber, planOwner]);
+        let planSubscription = await ctx.planSubscriptionList.getGymPlanSubscription(planSubKey);
 
-        // save the owner's MSP 
-        let mspid = ctx.clientIdentity.getMSPID();
-        planSubscription.setOwnerMSP(mspid);
+        if ( planSubscription !== null ){
+            if (planSubscription.isSubscribed()){
+                throw new Error('\nPlan ' + planOwner + planNumber + ' already subcribed by ' +  owner);    
+            }
+            else{
+                planSubscription.setSubscribed();
+                // Add the plan to the list of all similar gym plans in the ledger world state
+                await ctx.planSubscriptionList.updateGymPlanSubscription(planSubscription);                
+            }
+        }
+        else{
 
-        planSubscription.setOwner(owner);
+            // Retrieve the current plan using key fields provided
+            let planKey = GymPlan.makeKey([planOwner, planNumber]);
+            let plan = await ctx.planList.getGymPlan(planKey);
 
-        // Add the plan to the list of all similar gym plans in the ledger world state
-        await ctx.planSubscriptionList.addGymPlanSubscription(planSubscription);
+            if (plan === null){
+                throw new Error('\nPlan ' + planOwner + planNumber + ' not found' );
+            }
 
+            if (plan.isIssued()){
+                plan.setSubscribing();
+                plan.subscriberCount = plan.subscriberCount + 1;
+
+                await ctx.planList.updateGymPlan(plan);
+            }        
+
+            planSubscription = GymPlanSubscription.createInstance(owner, planNumber, planOwner, subscribeDateTime);
+            planSubscription.setSubscribed();
+            
+            // save the owner's MSP 
+            let mspid = ctx.clientIdentity.getMSPID();
+            planSubscription.setOwnerMSP(mspid);
+
+            planSubscription.setOwner(owner);
+
+            // Add the plan to the list of all similar gym plans in the ledger world state
+            await ctx.planSubscriptionList.addGymPlanSubscription(planSubscription);            
+        }
         return planSubscription;
+    }
+
+    /**
+     * Unsubscribe gym plan
+     *
+      * @param {Context} ctx the transaction context
+      * @param {String} planSubscriber gym plan subscriber
+      * @param {Integer} planNumber plan number for this owner
+      * @param {String} planOwner owner of the plan
+     */
+     async unsubscribe(ctx, planSubscriber, planNumber, planOwner) {
+
+        let planSubKey = GymPlanSubscription.makeKey([planSubscriber, planNumber, planOwner]);
+        let planSubscription = await ctx.planSubscriptionList.getGymPlanSubscription(planSubKey);
+
+        if ( planSubscription !== null ){
+            if (planSubscription.isUnsubscribed()){
+                throw new Error('\nPlan ' + planOwner + planNumber + ' already unsubcribed by ' +  planSubscriber);
+            }
+            else{
+                planSubscription.setUnsubscribed();
+                // Add the plan to the list of all similar gym plans in the ledger world state
+                await ctx.planSubscriptionList.updateGymPlanSubscription(planSubscription);
+                return planSubscription;
+            }
+        }
+        else{
+            throw new Error('\nPlan ' + planOwner + planNumber + ' subscription not found for ' +  planSubscriber);            
+        }
     }
 
     /**
      * Use gym plan
      *
       * @param {Context} ctx the transaction context
-      * @param {String} owner gym plan owner
+      * @param {String} planOwner gym plan owner
       * @param {Integer} planNumber plan number for this owner
       * @param {String} planSubscriber plan subscriber
       * @param {String} planMember plan member
@@ -128,21 +261,135 @@ class GymPlanContract extends Contract {
       * @param {Integer} gymAccess is gym access included
       * @param {Integer} poolAccess is pool access included
      */
-     async use_plan(ctx, owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
+     async use_plan(ctx, planOwner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
 
-        let planUsage = GymPlanUsage.createInstance(owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess);
-        planUsage.setActive();
+        //  Confirm the plan exists and is active        
+        let planKey = GymPlan.makeKey([planOwner, planNumber]);
+        let plan = await ctx.planList.getGymPlan(planKey);
 
-        // save the owner's MSP 
-        let mspid = ctx.clientIdentity.getMSPID();
-        planUsage.setOwnerMSP(mspid);
+        if ( plan === null ){
+            throw new Error('\nPlan ' + planOwner + planNumber + ' does not exists ');    
+        }
+        else{
+            if (plan.isActive()){
+                
+                var current = new Date();
 
-        planUsage.setOwner(owner);
+                if (current >= plan.activeDateTime){
+                
+                    //  confirm there is a valid subscription
+                    let planSubKey = GymPlanSubscription.makeKey([planSubscriber, planNumber, planOwner]);
+                    let planSubscription = await ctx.planSubscriptionList.getGymPlanSubscription(planSubKey);
 
-        // Add the plan usage to the list of all similar gym plans usages in the ledger world state
-        await ctx.planUsageList.addGymPlanUsage(planUsage);
+                    if ( planSubscription === null ){
+                        throw new Error('\nPlan ' + planOwner + planNumber + ' is not subscribed by ' + planSubscriber);    
+                    }
+                    else{
+                        
+                        if ( planSubscription.isSubscribed ()){
+                        
+                            let planUsage = GymPlanUsage.createInstance(planOwner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess);
+                        
+                            // save the owner's MSP 
+                            let mspid = ctx.clientIdentity.getMSPID();
+                            planUsage.setOwnerMSP(mspid);
+        
+                            planUsage.setOwner(planOwner);
+        
+                            // Add the plan usage to the list of all similar gym plans usages in the ledger world state
+                            await ctx.planUsageList.addGymPlanUsage(planUsage);
+        
+                            return planUsage;     
+                        }
+                        else{
+                            throw new Error('\nPlan ' + planOwner + planNumber + ' is not subscribed by ' + planSubscriber);    
+                        }
+                    }                    
+                }
+                else{
+                    throw new Error('\nPlan ' + planOwner + planNumber + ' is not active yet ');    
+                }
+            }
+            else{
+                throw new Error('\nPlan ' + planOwner + planNumber + ' is not active ');    
+            }
+        }
+    }
 
-        return planUsage;
+    /**
+     * Cancel gym plan usage
+     *
+      * @param {Context} ctx the transaction context
+      * @param {String} planOwner gym plan owner
+      * @param {Integer} planNumber plan number for this owner
+      * @param {String} planSubscriber plan subscriber
+      * @param {String} planMember plan member
+      * @param {Integer} trainerSessions number of personal training sessions
+      * @param {Integer} numClasses number of classes
+      * @param {Integer} gymAccess is gym access included
+      * @param {Integer} poolAccess is pool access included
+     */
+     async cancel_use_plan(ctx, planOwner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
+
+        //  Confirm the plan exists and is active        
+        let planKey = GymPlan.makeKey([planOwner, planNumber]);
+        let plan = await ctx.planList.getGymPlan(planKey);
+
+        if ( plan === null ){
+            throw new Error('\nPlan ' + planOwner + planNumber + ' does not exists ');    
+        }
+        else{
+            //  subcriber is permitted to cancel the usage as long as the plan is still active
+            //  members or the health insurance company are not permitted to cancel usage
+            if (plan.isActive()){                
+
+                var current = new Date();
+
+                if (current >= plan.activeDateTime){
+                
+                    //  confirm there is a valid subscription
+                    let planSubKey = GymPlanSubscription.makeKey([planSubscriber, planNumber, planOwner]);
+                    let planSubscription = await ctx.planSubscriptionList.getGymPlanSubscription(planSubKey);
+
+                    if ( planSubscription === null ){
+                        throw new Error('\nPlan ' + planOwner + planNumber + ' is not subscribed by ' + planSubscriber);    
+                    }
+                    else{
+                        
+                        if ( planSubscription.isSubscribed ()){
+                        
+                            let planUsageKey = GymPlanUsage.makeKey([planOwner, planNumber, planSubscriber, planMember]);
+                            let planUsage = await ctx.planUsageList.getGymPlanSubscription(planUsageKey);
+                        
+                            // save current MSP 
+                            let mspid = ctx.clientIdentity.getMSPID();                            
+
+                            // ensure it is the subcriber requesting the cancellation
+                            if (planSubscription.mspid === mspid){                            
+        
+                                if (planUsage.isConfirmed()){
+
+                                    planUsage.setCancelled();
+                                    // Add the plan usage to the list of all similar gym plans usages in the ledger world state
+                                    await ctx.planUsageList.updateGymPlanUsage(planUsage);
+            
+                                    return planUsage;
+                                }
+                            }
+                        }
+                        else{
+                            throw new Error('\nPlan ' + planOwner + planNumber + ' is not subscribed by ' + planSubscriber);    
+                        }
+                    }
+                }
+                else{
+                    throw new Error('\nPlan ' + planOwner + planNumber + ' is not active yet ');    
+                }
+            }
+            else{
+                throw new Error('\nPlan ' + planOwner + planNumber + ' is not active ');    
+            }
+        }
     }
 
     /**

@@ -13,12 +13,35 @@
 // Bring key classes into scope, most importantly Fabric SDK network class
 const fs = require('fs');
 const yaml = require('js-yaml');
+const moment = require('moment');
 const { Wallets, Gateway } = require('fabric-network');
 const GymPlan = require('../contract/lib/gymplan.js');
-const GymPlanSubcription = require('../contract/lib/gymplansubscription.js');
 
 // Main program function
 async function main() {
+
+    //  Default values is no params are passed
+    var planOwner = 'UniversalHealth';
+    var planNumber = '00001'
+    var date = new Date();
+    var issueDate = moment(date).format('YYYY-MM-DD');
+    var activeDate = new Date(date.setMonth(date.getMonth()+1));
+    activeDate = moment(activeDate).format('YYYY-MM-DD');
+    var expiryDate = new Date(date.setMonth(date.getMonth()+13));
+    expiryDate = moment(expiryDate).format('YYYY-MM-DD');
+    var subscriberCount = 0;
+
+    process.argv.forEach(function (val, index, array) {
+        console.log(index + ': ' + val);
+
+        if(index == 2 ){
+            planOwner = val; 
+        }
+
+        if(index == 3 ){
+            planNumber = val; 
+        }
+    });
 
     // A wallet stores a collection of identities for use
     const wallet = await Wallets.newFileSystemWallet('../identity/user/kate/wallet');
@@ -60,10 +83,11 @@ async function main() {
         // issue gym plan
         console.log('Submit gym plan issue transaction.');
 
-        const issueResponse = await contract.submitTransaction('issue', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
+        //const issueResponse = await contract.submitTransaction('issue', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
+        const issueResponse = await contract.submitTransaction('issue', planOwner, planNumber, issueDate, activeDate, expiryDate, subscriberCount, '2', '1', '1', '1');
 
         // process response
-        console.log('Process issue transaction response.'+issueResponse);
+        console.log('Process issue transaction response.' + issueResponse);
 
         let plan = GymPlan.fromBuffer(issueResponse);
 

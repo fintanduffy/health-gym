@@ -46,7 +46,7 @@ class GymPlanSubscription extends State {
         this.currentState = gpState.SUBSCRIBED;
     }
 
-    setUnSubscribed(){
+    setUnsubscribed(){
         this.currentState = gpState.UNSUBSCRIBED;
     }
 
@@ -54,7 +54,7 @@ class GymPlanSubscription extends State {
         return this.currentState === gpState.SUBSCRIBED;
     }
 
-    isUnSubscribed(){
+    isUnsubscribed(){
         return this.currentState === gpState.UNSUBSCRIBED;
     }
 

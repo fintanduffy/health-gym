@@ -7,7 +7,8 @@ const State = require('../ledger-api/state.js');
 const gpState = {
     ISSUED: 1,
     SUBSCRIBING: 2,
-    EXPIRED: 3
+    ACTIVE: 3,
+    EXPIRED: 5
 };
 
 /**
@@ -51,6 +52,10 @@ class GymPlan extends State {
         this.currentState = gpState.SUBSCRIBING
     }
 
+    setActive(){
+        this.currentState = gpState.ACTIVE
+    }
+
     setExpired(){
         this.currentState = gpState.EXPIRED
     }
@@ -61,6 +66,10 @@ class GymPlan extends State {
 
     isSubscribing(){
         return this.currentState === gpState.SUBSCRIBING;
+    }
+
+    isActive(){
+        return this.currentState === gpState.ACTIVE;
     }
 
     isExpired(){
@@ -86,8 +95,8 @@ class GymPlan extends State {
     /**
      * Factory method to create a gym plan object
      */
-    static createInstance(owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess) {
-        return new GymPlan({owner, planNumber, issueDateTime, maturityDateTime, trainerSessions, numClasses, gymAccess, poolAccess });
+    static createInstance(owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subscriberCount, totalAwards, trainerSessions, numClasses, gymAccess, poolAccess) {
+        return new GymPlan({owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subscriberCount, totalAwards, trainerSessions, numClasses, gymAccess, poolAccess });
     }
 
     static getClass() {
