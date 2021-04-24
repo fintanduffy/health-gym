@@ -8,7 +8,7 @@
  * 6. Process response
  */
 
-//  node issue.js UniversalHealth 00003 2021-03-01 2021-04-01 2022-04-01
+//  node activatePlan.js UniversalHealth 00003 
 
 'use strict';
 
@@ -25,17 +25,7 @@ async function main() {
     //  Default values is no params are passed
     var planOwner = 'UniversalHealth';
     var planNumber = '00001'
-    var date = new Date();
-    var issueDate = moment(date).format('YYYY-MM-DD');
-    var activeDate = new Date(date.setMonth(date.getMonth()+1));
-    activeDate = moment(activeDate).format('YYYY-MM-DD');
-    var expiryDate = new Date(date.setMonth(date.getMonth()+13));
-    expiryDate = moment(expiryDate).format('YYYY-MM-DD');
-    var subscriberCount = 0;
-
-    //  Note: should include date validation or not allow passing the dates as parameters
-    //  Including it here for testing purposes
-
+    
     process.argv.forEach(function (val, index, array) {
         console.log(index + ': ' + val);
 
@@ -45,19 +35,8 @@ async function main() {
 
         if(index == 3 ){
             planNumber = val; 
-        }
+        }        
         
-        if(index == 4 ){
-            issueDate = val;
-        }
-
-        if(index == 5 ){
-            activeDate = val;
-        }
-
-        if(index == 6 ){
-            expiryDate = val;
-        }
     });
 
     // A wallet stores a collection of identities for use
@@ -98,17 +77,16 @@ async function main() {
         const contract = await network.getContract('gymplancontract');
 
         // issue gym plan
-        console.log('Submit gym plan issue transaction.');
+        console.log('Submit gym plan activate_plan transaction.');
 
-        //const issueResponse = await contract.submitTransaction('issue', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
-        const issueResponse = await contract.submitTransaction('issue', planOwner, planNumber, issueDate, activeDate, expiryDate, subscriberCount, '2', '1', '1', '1');
+        const issueResponse = await contract.submitTransaction('activate_plan', planOwner, planNumber);
 
         // process response
         console.log('Process issue transaction response.' + issueResponse);
 
         let plan = GymPlan.fromBuffer(issueResponse);
 
-        console.log(`${plan.owner} gym plan : ${plan.planNumber} successfully issued.`);
+        console.log(`${plan.owner} gym plan : ${plan.planNumber} successfully activated.`);
         console.log('Transaction complete.');
 
     } catch (error) {

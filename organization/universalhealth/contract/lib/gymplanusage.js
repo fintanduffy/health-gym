@@ -78,8 +78,8 @@ class GymPlanUsage extends State {
     /**
      * Factory method to create a gym plan object
      */
-    static createInstance(issuer, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
-        return new GymPlanUsage({issuer, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess});
+    static createInstance(owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess) {
+        return new GymPlanUsage({owner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess});
     }
 
     static getClass() {

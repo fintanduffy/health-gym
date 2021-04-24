@@ -1,3 +1,6 @@
+echo --- Change directory
+cd ~/fabric-samples/health-gym/organization/globogym
+
 echo --- Create the chaincode package ---
 peer lifecycle chaincode package gp.tar.gz --lang node --path ./contract --label gp_0
 
@@ -8,7 +11,7 @@ echo --- Install the chaincode on the Globogym peer
 peer lifecycle chaincode install gp.tar.gz
 
 echo --- Save the package ID as an environment variable ---
-export PACKAGE_ID=gp_0:0a80e28b3ddb70bdc27926b664e9914eaa1e277b8869a4c800746741abb2733a
+export PACKAGE_ID=gp_0:209895cd9376a9f7dfb7c4dbae2c6184670b608eb2db2d0f6447701280cee601
 
 echo --- Approve the chaincode definition ---
 peer lifecycle chaincode approveformyorg --orderer localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name gymplancontract -v 0 --package-id $PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA

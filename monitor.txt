@@ -1,0 +1,4 @@
+cd ~/fabric-samples/health-gym/organization/universalhealth
+
+sudo ./configuration/cli/monitordocker.sh net_test
+
