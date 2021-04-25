@@ -98,29 +98,25 @@ class GymPlanContract extends Contract {
         return plan;
     }
 
-    async expire_plan(ctx, owner, planNumber) {
+    async expire_plan(ctx, planOwner, planNumber) {
 
         // Retrieve the current plan using key fields provided
-        let planKey = GymPlan.makeKey([owner, planNumber]);
+        let planKey = GymPlan.makeKey([planOwner, planNumber]);
         let plan = await ctx.planList.getGymPlan(planKey);
 
-        // Validate current owner
-        if (plan.getOwner() !== currentOwner) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner);
-        }
-
-        if (plan.isActive()) {
+        // To do : implement date validation
+        /*if (plan.isActive()) {            
             var current = new Date();
             if (current <= plan.expiryDateTime){
                 plan.setExpired();
             }
             else{
-                throw new Error('\nPlan ' + issuer + planNumber + ' is active and has not passed the expiratin date' );
+                throw new Error('\nPlan ' + planOwner + planNumber + ' is active and has not passed the expiratin date' );
             }
         }        
-        else{
+        else{*/
             plan.setExpired();
-        }
+        //}
 
         // Update the plan
         await ctx.planList.updateGymPlan(plan);
