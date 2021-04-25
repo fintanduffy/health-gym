@@ -25,5 +25,4 @@ class GymPlanList extends StateList {
     }
 }
 
-
 module.exports = GymPlanList;

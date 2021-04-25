@@ -64,23 +64,24 @@ class GymPlanContract extends Contract {
      * @param {String} activeDateTime, plan activation date
      * @param {String} expiryDateTime, plan expiry date
      * @param {Integer} subsciberCount, number of subscribers
+     * @param {Integer} totalAwards, total value to be distributed to subscribers
      * @param {Integer} trainerSessions number of personal training sessions
-     * @param {Integer} numClasses number of classes
+     * @param {Integer} numClasses number of classes during the term of the plan
      * @param {Integer} gymAccess is gym access included
      * @param {Integer} poolAccess is pool access included
     */
-    async issue(ctx, owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, trainerSessions, numClasses, gymAccess, poolAccess) {
+    async issue(ctx, owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, totalAwards, trainerSessions, numClasses, gymAccess, poolAccess) {
 
         //  Check if the plan already exists
         let planKey = GymPlan.makeKey([owner, planNumber]);
         let plan = await ctx.planList.getGymPlan(planKey);
 
         if ( plan !== null ){
-            throw new Error('\nPlan ' + owner + planNumber + ' already exists ');    
+            throw new Error('\nPlan ' + owner + planNumber + ' already exists ');
         }
 
         // create an instance of the plan
-        plan = GymPlan.createInstance(owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, trainerSessions, numClasses, gymAccess, poolAccess);
+        plan = GymPlan.createInstance(owner, planNumber, issueDateTime, activeDateTime, expiryDateTime, subsciberCount, totalAwards, trainerSessions, numClasses, gymAccess, poolAccess);
 
         // Smart contract, rather than plan, moves plan into ISSUED state
         plan.setIssued();
@@ -323,9 +324,10 @@ class GymPlanContract extends Contract {
             //  members or the health insurance company are not permitted to cancel usage
             if (plan.isActive()){                
 
+                /* To Do: Date validation   
                 var current = new Date();
 
-                if (current >= plan.activeDateTime){
+                if (current >= plan.activeDateTime){*/ 
                 
                     //  confirm there is a valid subscription
                     let planSubKey = GymPlanSubscription.makeKey([planSubscriber, planNumber, planOwner]);
@@ -361,171 +363,15 @@ class GymPlanContract extends Contract {
                             throw new Error('\nPlan ' + planOwner + planNumber + ' is not subscribed by ' + planSubscriber);    
                         }
                     }
-                }
+                /*}
                 else{
                     throw new Error('\nPlan ' + planOwner + planNumber + ' is not active yet ');    
-                }
+                }*/
             }
             else{
                 throw new Error('\nPlan ' + planOwner + planNumber + ' is not active ');    
             }
         }
-    }
-
-    /**
-     * Buy gym plan
-     *
-      * @param {Context} ctx the transaction context
-      * @param {String} issuer gym plan issuer
-      * @param {Integer} planNumber plan number for this issuer
-      * @param {String} currentOwner current owner of plan
-      * @param {String} newOwner new owner of plan
-      * @param {Integer} price price paid for this plan // transaction input - not written to asset
-      * @param {String} purchaseDateTime time plan was purchased (i.e. traded)  // transaction input - not written to asset
-     */
-    async buy(ctx, issuer, planNumber, currentOwner, newOwner, price, purchaseDateTime) {
-
-        // Retrieve the current plan using key fields provided
-        let planKey = GymPlan.makeKey([issuer, planNumber]);
-        let plan = await ctx.planList.getGymPlan(planKey);
-
-        // Validate current owner
-        if (plan.getOwner() !== currentOwner) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner);
-        }
-
-        // First buy moves state from ISSUED to TRADING (when running )
-        /*if (plan.isIssued()) {
-            plan.setTrading();
-        }
-
-        // Check plan is not already REDEEMED
-        if (plan.isTrading()) {
-            plan.setOwner(newOwner);
-            // save the owner's MSP 
-            let mspid = ctx.clientIdentity.getMSPID();
-            plan.setOwnerMSP(mspid);
-        } else {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not trading. Current state = ' + plan.getCurrentState());
-        }*/
-
-        // Update the plan
-        await ctx.planList.updateGymPlan(plan);
-        return plan;
-    }
-
-    /**
-      *  Buy request:  (2-phase confirmation: Gym plan is 'PENDING' subject to completion of transfer by owning org)
-      *  Alternative to 'buy' transaction
-      *  Note: 'buy_request' puts plan in 'PENDING' state - subject to transfer confirmation [below].
-      * 
-      * @param {Context} ctx the transaction context
-      * @param {String} issuer gym plan issuer
-      * @param {Integer} planNumber plan number for this issuer
-      * @param {String} currentOwner current owner of plan
-      * @param {String} newOwner new owner of plan                              // transaction input - not written to asset per se - but written to block
-      * @param {Integer} price price paid for this plan                         // transaction input - not written to asset per se - but written to block
-      * @param {String} purchaseDateTime time plan was requested                // transaction input - ditto.
-     */
-    async buy_request(ctx, issuer, planNumber, currentOwner, newOwner, price, purchaseDateTime) {
-        
-
-        // Retrieve the current plan using key fields provided
-        let planKey = GymPlan.makeKey([issuer, planNumber]);
-        let plan = await ctx.planList.getGymPlan(planKey);
-
-        // Validate current owner - this is really information for the user trying the sample, rather than any 'authorisation' check per se FYI
-        if (plan.getOwner() !== currentOwner) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by ' + currentOwner + ' provided as a parameter');
-        }
-        // plan set to 'PENDING' - can only be transferred (confirmed) by identity from owning org (MSP check).
-        //plan.setPending();
-
-        // Update the plan
-        await ctx.planList.updateGymPlan(plan);
-        return plan;
-    }
-
-    /**
-     * transfer gym plan: only the owning org has authority to execute. It is the complement to the 'buy_request' transaction. '[]' is optional below.
-     * eg. issue -> buy_request -> transfer -> [buy ...n | [buy_request...n | transfer ...n] ] -> redeem
-     * this transaction 'pair' is an alternative to the straight issue -> buy -> [buy....n] -> redeem ...path
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer gym plan issuer
-     * @param {Integer} planNumber plan number for this issuer
-     * @param {String} newOwner new owner of plan
-     * @param {String} newOwnerMSP  MSP id of the transferee
-     * @param {String} confirmDateTime  confirmed transfer date.
-    */
-    async transfer(ctx, issuer, planNumber, newOwner, newOwnerMSP, confirmDateTime) {
-
-        // Retrieve the current plan using key fields provided
-        let planKey = GymPlan.makeKey([issuer, planNumber]);
-        let plan = await ctx.planList.getGymPlan(planKey);
-
-        // Validate current owner's MSP in the plan === invoking transferor's MSP id - can only transfer if you are the owning org.
-
-        if (plan.getOwnerMSP() !== ctx.clientIdentity.getMSPID()) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not owned by the current invoking Organisation, and not authorised to transfer');
-        }
-
-        // Plan needs to be 'pending' - which means you need to have run 'buy_pending' transaction first.
-        /*if ( ! plan.isPending()) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' is not currently in state: PENDING for transfer to occur: \n must run buy_request transaction first');
-        }*/
-        // else all good
-
-        plan.setOwner(newOwner);
-        // set the MSP of the transferee (so that, that org may also pass MSP check, if subsequently transferred/sold on)
-        plan.setOwnerMSP(newOwnerMSP);
-        plan.setTrading();
-        plan.confirmDateTime = confirmDateTime;
-
-        // Update the plan
-        await ctx.planList.updateGymPlan(plan);
-        return plan;
-    }
-
-    /**
-     * Redeem gym plan
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer gym plan issuer
-     * @param {Integer} planNumber plan number for this issuer
-     * @param {String} redeemingOwner redeeming owner of plan
-     * @param {String} issuingOwnerMSP the MSP of the org that the plan will be redeemed with.
-     * @param {String} redeemDateTime time plan was redeemed
-    */
-    async redeem(ctx, issuer, planNumber, redeemingOwner, issuingOwnerMSP, redeemDateTime) {
-
-        let planKey = GymPlan.makeKey([issuer, planNumber]);
-
-        let plan = await ctx.planList.getGymPlan(planKey);
-
-        // Check plan is not alread in a state of REDEEMED
-        /*if (plan.isRedeemed()) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' has already been redeemed');
-        }*/
-
-        // Validate current redeemer's MSP matches the invoking redeemer's MSP id - can only redeem if you are the owning org.
-
-        if (plan.getOwnerMSP() !== ctx.clientIdentity.getMSPID()) {
-            throw new Error('\nPlan ' + issuer + planNumber + ' cannot be redeemed by ' + ctx.clientIdentity.getMSPID() + ', as it is not the authorised owning Organisation');
-        }
-
-        // As this is just a sample, can show additional verification check: that the redeemer provided matches that on record, before redeeming it
-        if (plan.getOwner() === redeemingOwner) {
-            plan.setOwner(plan.getIssuer());
-            plan.setOwnerMSP(issuingOwnerMSP);
-            //plan.setRedeemed();
-            plan.redeemDateTime = redeemDateTime; // record redemption date against the asset (the complement to 'issue date')
-        } else {
-            throw new Error('\nRedeeming owner: ' + redeemingOwner + ' organisation does not currently own plan: ' + issuer + planNumber);
-        }
-
-        await ctx.planList.updateGymPlan(plan);
-        return plan;
     }
 
     // Query transactions
@@ -542,7 +388,7 @@ class GymPlanContract extends Contract {
         // Get a key to be used for History query
 
         let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
-        let results = await query.getAssetHistory(owner, planNumber); // (cpKey);
+        let results = await query.getAssetHistory(owner, planNumber); // (gpKey);
         return results;
 
     }

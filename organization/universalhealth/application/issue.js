@@ -2,13 +2,13 @@
  * This application has 6 basic steps:
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
- * 3. Access PlanNet network
+ * 3. Access GymPlanNet network
  * 4. Construct request to issue gym plan
  * 5. Submit transaction
  * 6. Process response
  */
 
-//  node issue.js UniversalHealth 00003 2021-03-01 2021-04-01 2022-04-01
+//  sample call: $ node issue.js UniversalHealth 00002 2021-03-01 2021-04-01 2022-04-01 0 100000 2 52 1 1
 
 'use strict';
 
@@ -32,6 +32,11 @@ async function main() {
     var expiryDate = new Date(date.setMonth(date.getMonth()+13));
     expiryDate = moment(expiryDate).format('YYYY-MM-DD');
     var subscriberCount = 0;
+    var totalAwards = 0;  //  zero by default as this should be set by whoever is creating the plan
+    var trainerSessions = 0;
+    var numClasses = 0;
+    var gymAccess = 0;
+    var poolAccess = 0;
 
     //  Note: should include date validation or not allow passing the dates as parameters
     //  Including it here for testing purposes
@@ -57,6 +62,30 @@ async function main() {
 
         if(index == 6 ){
             expiryDate = val;
+        }
+
+        if(index == 7 ){
+            subscriberCount = val;
+        }
+
+        if(index == 8 ){
+            totalAwards = val;
+        }
+
+	if(index == 9 ){
+            trainerSessions = val;
+        }
+
+        if(index == 10 ){
+            numClasses = val;
+        }
+
+        if(index == 11 ){
+            gymAccess = val;
+        }
+
+        if(index == 12 ){
+            poolAccess = val;
         }
     });
 
@@ -100,8 +129,7 @@ async function main() {
         // issue gym plan
         console.log('Submit gym plan issue transaction.');
 
-        //const issueResponse = await contract.submitTransaction('issue', 'UniversalHealth', '00001', '2020-05-31', '2020-11-30', '2', '1', '1', '1');
-        const issueResponse = await contract.submitTransaction('issue', planOwner, planNumber, issueDate, activeDate, expiryDate, subscriberCount, '2', '1', '1', '1');
+        const issueResponse = await contract.submitTransaction('issue', planOwner, planNumber, issueDate, activeDate, expiryDate, subscriberCount, totalAwards, trainerSessions, numClasses, gymAccess, poolAccess);
 
         // process response
         console.log('Process issue transaction response.' + issueResponse);
