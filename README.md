@@ -7,7 +7,7 @@ Note that I have created the health-gym project directory within fabric-samples.
 Clone the git repository:
 >$ git clone https://github.com/fintanduffy/health-gym
 
-Change directory health-gym:
+Change directory to health-gym:
 >$ cd health-gym
 
 Start GymPlanNet network by running:
@@ -20,10 +20,10 @@ Deploy and approve the smart contract chaincode on both peers:
 Open a new terminal window and go to the Universal Health application directory:
 >$ cd ~/fabric-samples/health-gym/organization/universalhealth/application
 
-Enroll the health insurance company admin user
+Enroll the health insurance company admin user:
 >$ node enrollUser.js
 
-Issue the gym plan
+Issue the gym plan:
 >$ node issue.js UniversalHealth 00002 2021-04-25 2021-04-26 2022-04-26 0 100000 2 52 1 1
 
 Change to the globo gym application directory:
