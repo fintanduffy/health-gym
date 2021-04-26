@@ -4,7 +4,7 @@
   "description": "",
   "main": "issue.js",
   "scripts": {
-    "test": "rm -rf _idwallet && node addToWallet.js && node issue.js"
+    "test": "rm -rf _idwallet && node enrollUser.js && node issue.js"
   },
   "keywords": [],
   "author": "",

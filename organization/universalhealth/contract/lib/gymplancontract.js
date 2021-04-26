@@ -138,6 +138,10 @@ class GymPlanContract extends Contract {
             throw new Error('\nPlan ' + planOwner + planNumber + ' has no subscribers. Unable to activate.' );
         }
 
+        if (plan.isExpired()) {
+            throw new Error('\nPlan ' + planOwner + planNumber + ' has expired. Unable to activate.' );
+        }
+
         if (plan.isSubscribing()) {
             if (plan.subscriberCount > 0){
                 plan.setActive();
