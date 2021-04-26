@@ -2,13 +2,13 @@
  * This application has 6 basic steps:
  * 1. Select an identity from a wallet
  * 2. Connect to network gateway
- * 3. Access PlanNet network
- * 4. Construct request to issue gym plan
+ * 3. Access GymPlanNet network
+ * 4. Construct request to activate gym plan
  * 5. Submit transaction
  * 6. Process response
  */
 
-//  node activatePlan.js UniversalHealth 00002 
+//  sample call : node activatePlan.js UniversalHealth 00002 
 
 'use strict';
 
