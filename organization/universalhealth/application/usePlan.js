@@ -8,6 +8,8 @@
  * 6. Process response
  */
 
+//  sample call: $ node usePlan.js UniversalHealth 00002 GloboGym Gordon 0 1 0 0
+
 'use strict';
 
 // Bring key classes into scope, most importantly Fabric SDK network class
@@ -18,6 +20,52 @@ const GymPlanUsage = require('../contract/lib/gymplanusage.js');
 
 // Main program function
 async function main () {
+
+    var planMember = 'Gordon';
+    var planSubscriber = 'GloboGym';
+    var planNumber = '00001';
+    var planOwner = 'UniversalHealth';
+    var trainerSessions = 0;
+    var numClasses = 0;
+    var gymAccess = 0;
+    var poolAccess = 0;
+
+    process.argv.forEach(function (val, index, array) {
+        console.log(index + ': ' + val);
+
+        if(index == 2 ){
+            planOwner = val; 
+        }
+
+        if(index == 3 ){
+            planNumber = val; 
+        }
+        
+        if(index == 4 ){
+            planSubscriber = val;
+        }
+
+        if(index == 5 ){
+            planMember = val;
+        }
+
+	if(index == 6 ){
+            trainerSessions = val;
+        }
+
+        if(index == 7 ){
+            numClasses = val;
+        }
+
+        if(index == 8 ){
+            gymAccess = val;
+        }
+
+        if(index == 9 ){
+            poolAccess = val;
+        }
+    });
+
 
     // A wallet stores a collection of identities for use
     const wallet = await Wallets.newFileSystemWallet('../identity/user/gordon/wallet');
@@ -59,13 +107,15 @@ async function main () {
         // use gym plan
         console.log('Submit gym plan use_plan transaction.');
 
-        const usageResponse = await contract.submitTransaction('use_plan', 'UniversalHealth', '00001', 'GloboGym', 'Gordon', '2', '1', '1', '1');
+        // const usageResponse = await contract.submitTransaction('use_plan', 'UniversalHealth', '00001', 'GloboGym', 'Gordon', '2', '1', '1', '1');
+
+        const usageResponse = await contract.submitTransaction('use_plan', planOwner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess);
         // process response
         console.log('Process use plan transaction response.');
 
         let planUsage = GymPlanUsage.fromBuffer(usageResponse);
 
-        console.log(`${planUsage.issuer} gym plan : ${planUsage.planNumber} successfully used by ${planUsage.planMember}`);
+        console.log(`${planUsage.owner} gym plan : ${planUsage.planNumber} successfully used by ${planUsage.planMember}`);
         console.log('Transaction complete.');
 
     } catch (error) {

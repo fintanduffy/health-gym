@@ -8,7 +8,7 @@ const gpState = {
     ISSUED: 1,
     SUBSCRIBING: 2,
     ACTIVE: 3,
-    EXPIRED: 5
+    EXPIRED: 4
 };
 
 /**

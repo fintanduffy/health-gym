@@ -274,7 +274,8 @@ class GymPlanContract extends Contract {
                     if ( planSubscription.isSubscribed ()){
                         
                         let planUsage = GymPlanUsage.createInstance(planOwner, planNumber, planSubscriber, planMember, trainerSessions, numClasses, gymAccess, poolAccess);
-                        
+                        planUsage.setConfirmed();
+
                         // save the owner's MSP 
                         let mspid = ctx.clientIdentity.getMSPID();
                         planUsage.setOwnerMSP(mspid);
@@ -387,7 +388,7 @@ class GymPlanContract extends Contract {
 
         // Get a key to be used for History query
 
-        let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let results = await query.getAssetHistory(owner, planNumber); // (gpKey);
         return results;
 
@@ -405,10 +406,9 @@ class GymPlanContract extends Contract {
 
         // Get a key to be used for History query
 
-        let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let results = await query.getAssetHistorySubscription(owner, planNumber, planSubscriber);
         return results;
-
     }
 
     /**
@@ -424,7 +424,7 @@ class GymPlanContract extends Contract {
 
         // Get a key to be used for History query
 
-        let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let results = await query.getAssetHistoryUsage(owner, planNumber, planSubscriber, planMember);
         return results;
     }
@@ -437,7 +437,7 @@ class GymPlanContract extends Contract {
     */
     async queryOwner(ctx, owner, listName) {
 
-        let query = new QueryUtils(ctx, listName); //'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let owner_results = await query.queryKeyByOwner(owner);
 
         return owner_results;
@@ -451,7 +451,7 @@ class GymPlanContract extends Contract {
     */
     async queryPartial(ctx, prefix, listName) {
 
-        let query = new QueryUtils(ctx, listName);//'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let partial_results = await query.queryKeyByPartial(prefix);
 
         return partial_results;
@@ -469,13 +469,12 @@ class GymPlanContract extends Contract {
     */
     async queryAdhoc(ctx, queryString, listName) {
 
-        let query = new QueryUtils(ctx, listName);//'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let querySelector = JSON.parse(queryString);
         let adhoc_results = await query.queryByAdhoc(querySelector);
 
         return adhoc_results;
     }
-
 
     /**
      * queryNamed - supply named query - 'case' statement chooses selector to build (pre-canned for demo purposes)
@@ -486,30 +485,35 @@ class GymPlanContract extends Contract {
     async queryNamed(ctx, queryname, listName) {
         let querySelector = {};
         switch (queryname) {
-            case "dormant":
-                querySelector = { "selector": { "currentState": 1 } };  // 1 = dormant state
+            case "issued":
+                querySelector = { "selector": { "currentState": 1 } };  // 1 = issued state - gymplan
                 break;
             case "subscribing":
-                querySelector = { "selector": { "currentState": 2 } };  // 2 = active state
+                querySelector = { "selector": { "currentState": 2 } };  // 2 = subscribing state - gym plan
                 break;    
             case "active":
-                querySelector = { "selector": { "currentState": 2 } };  // 2 = active state
+                querySelector = { "selector": { "currentState": 3 } };  // 3 = active state - gym plan
                 break;
-            case "redeemed":
-                querySelector = { "selector": { "currentState": 4 } };  // 4 = redeemd state
+            case "expired":
+                querySelector = { "selector": { "currentState": 4 } };  // 4 = expired state - gym plan
                 break;
-            case "trading":
-                querySelector = { "selector": { "currentState": 3 } };  // 3 = trading state
+            case "subscribed":
+                querySelector = { "selector": { "currentState": 1 } };  // 1 = subscribed state - gym plan subscription
+                break;            
+            case "unsubscribed":
+                querySelector = { "selector": { "currentState": 2 } };  // 2 = unsubscribed state - gym plan subscription
                 break;
-            case "value":
-                // may change to provide as a param - fixed value for now in this sample
-                querySelector = { "selector": { "faceValue": { "$gt": 4000000 } } };  // to test, issue GymPlans with faceValue <= or => this figure.
-                break;
+            case "confirmed":
+                querySelector = { "selector": { "currentState": 1 } };  // 1 = confirmed state - gym plan usage
+                break;            
+            case "cancelled":
+                querySelector = { "selector": { "currentState": 2 } };  // 1 = unsubscribed state - gym plan usage
+                break;                    
             default: // else, unknown named query
                 throw new Error('invalid named query supplied: ' + queryname + '- please try again ');
         }
 
-        let query = new QueryUtils(ctx, listName);//'org.gymplannet.gymplan');
+        let query = new QueryUtils(ctx, listName);
         let adhoc_results = await query.queryByAdhoc(querySelector);
 
         return adhoc_results;

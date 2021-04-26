@@ -1,7 +1,3 @@
-
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
 'use strict';
 
 const State = require('../ledger-api/state.js');
@@ -15,7 +11,6 @@ class QueryUtils {
     constructor(ctx, listName) {
         this.ctx = ctx;
         this.name = listName;
-        //this.supportedTypes = {};
     }
 
     // =========================================================================================
@@ -86,9 +81,6 @@ class QueryUtils {
         if (arguments.length < 1) {
             throw new Error('Incorrect number of arguments. Expecting 1');
         }
-        // ie namespace + prefix to assets etc eg 
-        // "Key":"org.plannet.planUniversalHealth0001"   (0002, etc)
-        // "Partial":'org.plannet.planlistUniversalHealth"'  (using partial key, find keys "0001", "0002" etc)
         const resultsIterator = await this.ctx.stub.getStateByPartialCompositeKey(this.name, [assetspace]);
         let method = this.getAllResults;
         let results = await method(resultsIterator, false);
@@ -114,7 +106,7 @@ class QueryUtils {
         }
         let queryString = {};
         queryString.selector = {};
-        //  queryString.selector.docType = 'indexOwnerDoc';
+        
         queryString.selector.owner = owner;
         // set to (eg)  '{selector:{owner:UniversalHealth}}'
         let method = self.getQueryResultForQueryString;
@@ -149,12 +141,8 @@ class QueryUtils {
         return queryResults;
     }
 
-    // WORKER functions are below this line: these are called by the above functions, where iterator is passed in
+    // Utility functions are below
 
-    // =========================================================================================
-    // getQueryResultForQueryString woerk function executes the passed-in query string.
-    // Result set is built and returned as a byte array containing the JSON results.
-    // =========================================================================================
     /**
      * Function getQueryResultForQueryString
      * @param {Context} ctx the transaction context
@@ -163,19 +151,16 @@ class QueryUtils {
     */
     async getQueryResultForQueryString(ctx, self, queryString) {
 
-        // console.log('- getQueryResultForQueryString queryString:\n' + queryString);
-
         const resultsIterator = await ctx.stub.getQueryResult(queryString);
         let results = await self.getAllResults(resultsIterator, false);
 
         return results;
-
     }
 
     /**
      * Function getAllResults
      * @param {resultsIterator} iterator within scope passed in
-     * @param {Boolean} isHistory query string created prior to calling this fn
+     * @param {Boolean} isHistory query string created prior to calling this function
     */
     async getAllResults(iterator, isHistory) {
         let allResults = [];
@@ -203,13 +188,13 @@ class QueryUtils {
                                     jsonRes.Value.currentState = 'ISSUED';
                                     break;
                                 case 2:
-                                    jsonRes.Value.currentState = 'PENDING';
+                                    jsonRes.Value.currentState = 'SUBSCRIBING';
                                     break;
                                 case 3:
-                                    jsonRes.Value.currentState = 'TRADING';
+                                    jsonRes.Value.currentState = 'ACTIVE';
                                     break;
                                 case 4:
-                                    jsonRes.Value.currentState = 'REDEEMED';
+                                    jsonRes.Value.currentState = 'EXPIRED';
                                     break;
                                 default: // else, unknown named query
                                     jsonRes.Value.currentState = 'UNKNOWN';

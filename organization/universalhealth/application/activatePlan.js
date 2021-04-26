@@ -8,7 +8,7 @@
  * 6. Process response
  */
 
-//  node activatePlan.js UniversalHealth 00003 
+//  node activatePlan.js UniversalHealth 00002 
 
 'use strict';
 

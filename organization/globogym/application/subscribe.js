@@ -88,7 +88,6 @@ async function main () {
         // buy gym plan
         console.log('Submit gym plan subscribe transaction.');
 
-        //const subscribeResponse = await contract.submitTransaction('subscribe', 'GloboGym', '00001', 'UniversalHealth', '2020-05-31');
         const subscribeResponse = await contract.submitTransaction('subscribe', planSubscriber, planNumber, planOwner, subscriptionDate);
 
         // process response
